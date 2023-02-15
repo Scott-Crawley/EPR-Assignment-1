@@ -1,6 +1,11 @@
 # Ride-It: Backend and Microservice
 [add description]
 
+# ENV Variables
+- `DB_HOST` = MariaDB host [string]
+- `DB_USER` = MariaDB user [string]
+- `HMAC_KEY` = HMAC Secret [hexadecimal]
+
 # Debugging
 `npm start`
 

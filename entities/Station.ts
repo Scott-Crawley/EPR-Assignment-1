@@ -15,6 +15,6 @@ export class Station implements Serialisable {
     }
 
     static fromRow(row: any): Station {
-        return new Station(row.ID, row.Name, row.MaxCapacity, row.CurrentCapacity);
+        return new Station(row.id, row.name, row.max_capacity, row.current_capacity);
     }
 }

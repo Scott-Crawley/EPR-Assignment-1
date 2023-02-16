@@ -5,6 +5,7 @@
 - `DB_HOST` = MariaDB host [string]
 - `DB_USER` = MariaDB user [string]
 - `HMAC_KEY` = HMAC Secret [hexadecimal]
+- `AES_KEY` = AES Secret [hexadecimal]
 
 # Debugging
 `npm start`

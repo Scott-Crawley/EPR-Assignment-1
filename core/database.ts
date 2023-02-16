@@ -2,6 +2,7 @@ import * as log from './logging';
 import * as mdb from 'mariadb';
 
 import { Serialisable } from "../entities/Serialisable";
+import { ScooterLog } from '../entities/ScooterLog';
 import { Customer } from '../entities/Customer';
 import { Scooter } from '../entities/Scooter';
 import { Station } from '../entities/Station';
@@ -11,8 +12,8 @@ const p = log.prefix;
 var db: mdb.PoolConnection;
 
 export function connect(): boolean {
-    const host = process.env.DB_HOST || "http://localhost:3306";
-    const user = process.env.DB_USER || "root";
+    const host = process.env.DB_HOST;
+    const user = process.env.DB_USER;
 
     const pool = mdb.createPool({ host: host, user: user, connectionLimit: 1 });
     pool.getConnection()
@@ -38,10 +39,15 @@ export function getById(type: Serialisable, id: number): Serialisable | undefine
             eName  = "Scooter";
             break;
         case Station:
-            table  = "stations";
+            table  = "scooter_stations";
             entity = Station;
             eName  = "Station";
             break;
+        case ScooterLog:
+            table  = "scooter_logs";
+            entity = ScooterLog;
+            eName  = "ScooterLog";
+            break; 
         default:
             log.out(p.ERROR, `Invalid type: ${type.constructor.name}`);
             log.out(p.DEBUG, JSON.stringify(type));
@@ -64,22 +70,31 @@ export function insert(type: Serialisable): any {
     var args:   any;
     switch (type.constructor) {
         case Customer:
-            sql = `INSERT OR IGNORE INTO customers VALUES (NULL, ?, ?, ?, ?, ?)`;
+            sql = `INSERT OR IGNORE INTO customers VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
             var c = type as Customer;
-            var scooter: Scooter | number | undefined = c.scooter;
-            const cast = scooter as Scooter;
-            if (cast) scooter = cast.id;
-            args = [c.firstName, c.lastName, c.dob, c.strikes, scooter];
+           
+            var curScooterId: undefined | number;
+            var lstScooterId: undefined | number;
+            if (c.curScooter != undefined) curScooterId = c.curScooter.id; 
+            if (c.lastScooter != undefined) lstScooterId = c.lastScooter.id;
+
+            args = [c.firstName, c.lastName, c.dob, c.strikes, curScooterId, 
+                lstScooterId, c.totalDistance, c.lastDistance, c.username, c.password];
             break;
         case Scooter:
-            sql = `INSERT OR IGNORE INTO scooters VALUES (NULL, ?, ?, ?, ?, ?)`;
+            sql = `INSERT OR IGNORE INTO scooters VALUES (NULL, ?, ?, ?, ?, ?, ?)`;
             var sc = type as Scooter;
-            args = [sc.available, sc.lastUsed, sc.usedBy, sc.lastStationId, sc.coordinates];
+            args = [sc.available, sc.lastUsed, sc.usedBy, sc.lastStationId, sc.coordinates, sc.charge];
             break;
         case Station:
-            sql = `INSERT OR IGNORE INTO stations VALUES (NULL, ?, ?, ?)`;
+            sql = `INSERT OR IGNORE INTO scooter_stations VALUES (NULL, ?, ?, ?)`;
             var st = type as Station;
             args = [st.name, st.maxCapacity, st.currentCapacity];
+            break;
+        case ScooterLog:
+            sql = `INSERT OR IGNORE INTO scooter_logs VALUES (NULL, ?, ?, ?, ?)`;
+            var sl = type as ScooterLog;
+            args = [sl.action.toString(), sl.description, sl.customer, sl.date];
             break;
         default:
             log.out(p.ERROR, `Invalid type: ${type}`);
@@ -99,6 +114,9 @@ export function updateById(type: Serialisable, id: string | number, columns: Arr
             break;
         case Station:
             table = `stations`;
+            break;
+        case ScooterLog:
+            table = `scooter_logs`;
             break;
         default:
             log.out(p.ERROR, `Invalid type: ${type}`);
